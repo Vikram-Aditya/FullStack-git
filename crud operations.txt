@@ -1,0 +1,48 @@
+import { Component, Output } from '@angular/core';
+import { HttpClientModule, HttpClient } from '@angular/common/http';
+import { DbcallService } from './dbcall.service';
+import {map} from 'rxjs/operators';
+
+@Component({
+  selector: 'events-app',
+  template: `
+  <input type="text" class="form-control" (keyup.enter)="createPost(title)" #title/>
+  <table style="border:1px solid.">
+  <tr *ngFor="let dat of data">
+  <button (click)="updatePost(dat)" class="btn btn-default  btn-sm">Update</button>
+  <button (click)="deletePost(dat)" class="btn btn-default  btn-sm">Delete</button>
+  <td>{{dat.userId}}</td>
+  <td>{{dat.id}}</td>
+  <td>{{dat.title}}</td>
+  </tr>
+  </table>
+  `
+})
+export class EventsAppComponent {
+data:any;
+constructor(private serviceobj:DbcallService,private http:HttpClient){
+
+  this.serviceobj.dbcall().subscribe(result=>{
+    this.data=result;
+  console.log(this.data);
+  });
+}
+createPost(input:HTMLInputElement){
+let post={title:input.value};
+input.value='';
+this.http.post("http://jsonplaceholder.typicode.com/posts",JSON.stringify(post))
+.subscribe(response=>{post['id']=JSON.parse(JSON.stringify(response)).id;
+this.data.splice(0,0,post);
+});
+}
+updatePost(post){
+  this.http.patch("https://jsonplaceholder.typicode.com/posts"+'/'+post.id,JSON.stringify({isRead:true}))
+  .subscribe(response=>{console.log(response)})  //if put the JSON.stringify(post)
+}
+deletePost(post){
+  this.http.delete("https://jsonplaceholder.typicode.com/posts"+'/'+post.id).subscribe(response=>{
+    let index=this.data.indexOf(post);
+    this.data.splice(index,1);
+  })
+}
+}
